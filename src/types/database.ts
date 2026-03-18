@@ -33,6 +33,7 @@ export interface Database {
           is_active?: boolean
         }
         Update: Partial<Database['public']['Tables']['rooms']['Insert']>
+        Relationships: []
       }
       messages: {
         Row: {
@@ -52,6 +53,7 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['messages']['Insert']>
+        Relationships: []
       }
       participants: {
         Row: {
@@ -71,6 +73,7 @@ export interface Database {
           last_seen_at?: string
         }
         Update: Partial<Database['public']['Tables']['participants']['Insert']>
+        Relationships: []
       }
       rate_limits: {
         Row: {
@@ -86,6 +89,7 @@ export interface Database {
           count?: number
         }
         Update: Partial<Database['public']['Tables']['rate_limits']['Insert']>
+        Relationships: []
       }
     }
     Views: Record<string, never>
