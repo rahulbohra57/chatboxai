@@ -102,20 +102,21 @@ function FormLabel({
 }
 
 function FormControl({
-  className,
-  ...props
-}: React.ComponentProps<"div"> & { children?: React.ReactNode }) {
+  children,
+}: {
+  children?: React.ReactNode
+}) {
   const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
 
   // Use a wrapper approach since we don't have @radix-ui/react-slot
-  const child = React.Children.only(props.children) as React.ReactElement
+  const child = React.Children.only(children) as React.ReactElement<Record<string, unknown>>
   return React.cloneElement(child, {
+    ...child.props,
     id: formItemId,
     "aria-describedby": !error
       ? formDescriptionId
       : `${formDescriptionId} ${formMessageId}`,
     "aria-invalid": !!error,
-    ...child.props,
   })
 }
 
