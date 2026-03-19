@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getSupabaseServerClient } from '@/lib/supabase/server'
 import { getRoomBySlug } from '@/features/rooms/lib/room-queries'
 import { getMessagesByRoom } from '@/features/chat/lib/message-queries'
@@ -14,6 +14,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
   const room = await getRoomBySlug(slug, supabase)
   if (!room) notFound()
+  if (!room.is_active) redirect('/?closed=1')
 
   const messages = await getMessagesByRoom(room.id, supabase)
 

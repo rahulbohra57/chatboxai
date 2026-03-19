@@ -14,7 +14,6 @@ export async function getRoomBySlug(
     .from('rooms')
     .select('id, slug, name, room_type, created_at, updated_at, created_by_guest_id, is_active, closed_by_name')
     .eq('slug', slug)
-    .eq('is_active', true)
     .maybeSingle()
 
   if (error) {
