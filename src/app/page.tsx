@@ -1,9 +1,19 @@
+'use client'
+
+import { Suspense } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Zap, Lock, MessageCircle } from 'lucide-react'
+import { JoinRoomInput } from '@/features/rooms/components/join-room-input'
+import { YourRoomsList } from '@/features/rooms/components/your-rooms-list'
+import { ClosedRoomToast } from '@/features/rooms/components/closed-room-toast'
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background">
+      <Suspense fallback={null}>
+        <ClosedRoomToast />
+      </Suspense>
+
       {/* Navigation */}
       <nav className="border-b px-6 py-4 flex items-center justify-between max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
@@ -33,7 +43,7 @@ export default function HomePage() {
           No signup needed. Create a chat room in seconds, share the link with anyone,
           and start chatting in real time from any device.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col items-center gap-4">
           <Link
             href="/create"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition-colors"
@@ -41,8 +51,15 @@ export default function HomePage() {
             Create a room
             <ArrowRight className="w-4 h-4" />
           </Link>
+          <div className="flex flex-col items-center gap-2 w-full">
+            <p className="text-sm text-muted-foreground">or join an existing room</p>
+            <JoinRoomInput />
+          </div>
         </div>
       </section>
+
+      {/* Your Rooms */}
+      <YourRoomsList />
 
       {/* Features */}
       <section className="max-w-4xl mx-auto px-6 py-16">
