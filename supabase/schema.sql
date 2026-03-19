@@ -23,10 +23,10 @@ create table if not exists rooms (
 create unique index if not exists rooms_slug_idx on rooms(slug);
 create index if not exists rooms_is_active_idx on rooms(is_active);
 
--- NOTE: The following REPLICA IDENTITY statement must be run manually on the live DB
--- in the Supabase SQL Editor. It is required for Realtime to include all columns
--- (including closed_by_name) in the UPDATE payload.
--- alter table rooms replica identity full;
+-- Required for Supabase Realtime UPDATE payloads to include all columns (e.g. closed_by_name).
+-- Safe to run on fresh installs. For existing databases, also run this manually in
+-- the Supabase SQL Editor before deploying the close-room feature.
+alter table rooms replica identity full;
 
 -- ============================================================
 -- MESSAGES
