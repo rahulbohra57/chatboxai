@@ -1,4 +1,4 @@
-# LinkChat
+# ChatBoxAI
 
 A real-time, room-based chat application. Create a room, share the link, and start chatting — no account required.
 
