@@ -3,6 +3,8 @@ import { formatRelativeTime, formatFullTimestamp } from '@/lib/utils/dates'
 import type { Message } from '../types/message.types'
 import { cn } from '@/lib/utils'
 
+const SYSTEM_GUEST_ID = '__system__'
+
 interface MessageItemProps {
   message: Message
   isOwnMessage: boolean
@@ -10,6 +12,17 @@ interface MessageItemProps {
 }
 
 export function MessageItem({ message, isOwnMessage, isAIMessage }: MessageItemProps) {
+  // System event messages (join/leave) render as a centered pill
+  if (message.sender_guest_id === SYSTEM_GUEST_ID) {
+    return (
+      <div className="flex justify-center px-4 py-1.5">
+        <span className="text-xs text-muted-foreground bg-muted px-3 py-1 rounded-full">
+          {message.body}
+        </span>
+      </div>
+    )
+  }
+
   const initial = message.sender_name.charAt(0).toUpperCase()
 
   return (

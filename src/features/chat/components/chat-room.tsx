@@ -8,9 +8,10 @@ import { MessageList } from './message-list'
 import { MessageComposer } from './message-composer'
 import { JoinRoomForm } from '@/features/rooms/components/join-room-form'
 import { RoomHeader } from '@/features/rooms/components/room-header'
-import { getOrCreateGuestId, getDisplayName, hasJoinedRoom, addJoinedRoom } from '@/lib/auth/guest-session'
+import { getOrCreateGuestId, getDisplayName, hasJoinedRoom, addJoinedRoom, ensureJoinedRoom } from '@/lib/auth/guest-session'
 import { closeRoom } from '@/features/rooms/actions/close-room'
 import { getAIResponse } from '../actions/ai-response'
+import { insertSystemMessage } from '../actions/system-message'
 import type { Message } from '../types/message.types'
 import type { RoomPublic } from '@/features/rooms/types/room.types'
 
@@ -34,10 +35,21 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
 
   // Hydrate guest identity from localStorage (client-side only)
   useEffect(() => {
-    setGuestId(getOrCreateGuestId())
-    setDisplayNameState(getDisplayName())
+    const id = getOrCreateGuestId()
+    const name = getDisplayName()
+    setGuestId(id)
+    setDisplayNameState(name)
     setHasJoinedThisRoom(hasJoinedRoom(room.slug))
-  }, [room.slug])
+    // Track this room for users who skip the join form (already have a display name)
+    if (name) {
+      ensureJoinedRoom({
+        slug: room.slug,
+        name: room.name,
+        room_type: room.room_type as 'open' | 'secured',
+        joinedAt: new Date().toISOString(),
+      })
+    }
+  }, [room.slug, room.name, room.room_type])
 
   const handleJoined = (name: string) => {
     setDisplayNameState(name)
@@ -48,6 +60,13 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
       joinedAt: new Date().toISOString(),
     })
     setHasJoinedThisRoom(true)
+    insertSystemMessage(room.id, `${name} joined the chat`)
+  }
+
+  const handleLeaveRoom = async () => {
+    const name = displayName ?? 'Someone'
+    await insertSystemMessage(room.id, `${name} left the chat`)
+    router.push('/')
   }
 
   const handleCloseRoom = async () => {
@@ -106,6 +125,7 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
     <div className="flex flex-col h-full">
       <RoomHeader
         room={room}
+        onLeaveRoom={handleLeaveRoom}
         onCloseRoom={handleCloseRoom}
         isClosing={isClosing}
       />

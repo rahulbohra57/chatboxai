@@ -102,3 +102,16 @@ export function hasJoinedRoom(slug: string): boolean {
   if (typeof window === 'undefined') return false
   return getJoinedRooms().some((r) => r.slug === slug)
 }
+
+/**
+ * Adds a room to the joined list only if it's not already there.
+ * Use this when entering a room without going through the join form.
+ */
+export function ensureJoinedRoom(room: JoinedRoom): void {
+  if (typeof window === 'undefined') return
+  const rooms = getJoinedRooms()
+  if (!rooms.some((r) => r.slug === room.slug)) {
+    rooms.push(room)
+    localStorage.setItem(JOINED_ROOMS_KEY, JSON.stringify(rooms))
+  }
+}

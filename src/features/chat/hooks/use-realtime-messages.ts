@@ -48,14 +48,20 @@ export function useRealtimeMessages(
   // Atomically swap the optimistic placeholder for the confirmed real message.
   // Pre-registers the real ID in seenIds so the realtime subscription
   // cannot race-add a duplicate.
+  // If polling already added the real message (race), just remove the placeholder.
   const confirmOptimistic = useCallback((tempId: string, realMessage: Message) => {
     seenIds.current.add(realMessage.id)
     if (realMessage.created_at > lastSeenAt.current) {
       lastSeenAt.current = realMessage.created_at
     }
-    setMessages((prev) =>
-      prev.map((m) => (m.id === tempId ? realMessage : m))
-    )
+    setMessages((prev) => {
+      const alreadyPresent = prev.some((m) => m.id === realMessage.id)
+      if (alreadyPresent) {
+        // Polling beat us to it — drop the optimistic placeholder
+        return prev.filter((m) => m.id !== tempId)
+      }
+      return prev.map((m) => (m.id === tempId ? realMessage : m))
+    })
     seenIds.current.delete(tempId)
   }, [])
 
