@@ -2,7 +2,7 @@
 
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
-export const SYSTEM_GUEST_ID = '__system__'
+const SYSTEM_GUEST_ID = '__system__'
 
 export async function insertSystemMessage(
   roomId: string,
