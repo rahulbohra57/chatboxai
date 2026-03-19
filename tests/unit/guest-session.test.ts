@@ -5,6 +5,10 @@ import {
   setDisplayName,
   clearDisplayName,
   getGuestIdentity,
+  getJoinedRooms,
+  addJoinedRoom,
+  removeJoinedRoom,
+  hasJoinedRoom,
 } from '@/lib/auth/guest-session'
 
 // Clear localStorage before each test
@@ -60,5 +64,57 @@ describe('getGuestIdentity', () => {
   it('displayName is null when not set', () => {
     const { displayName } = getGuestIdentity()
     expect(displayName).toBeNull()
+  })
+})
+
+describe('joined rooms', () => {
+  it('returns empty array when nothing stored', () => {
+    expect(getJoinedRooms()).toEqual([])
+  })
+
+  it('adds a room and retrieves it', () => {
+    addJoinedRoom({ slug: 'my-room', name: 'My Room', room_type: 'open', joinedAt: '2026-01-01T00:00:00.000Z' })
+    const rooms = getJoinedRooms()
+    expect(rooms).toHaveLength(1)
+    expect(rooms[0].slug).toBe('my-room')
+    expect(rooms[0].name).toBe('My Room')
+  })
+
+  it('addJoinedRoom updates existing room by slug', () => {
+    addJoinedRoom({ slug: 'my-room', name: 'Old Name', room_type: 'open', joinedAt: '2026-01-01T00:00:00.000Z' })
+    addJoinedRoom({ slug: 'my-room', name: 'New Name', room_type: 'open', joinedAt: '2026-01-02T00:00:00.000Z' })
+    expect(getJoinedRooms()).toHaveLength(1)
+    expect(getJoinedRooms()[0].name).toBe('New Name')
+  })
+
+  it('removeJoinedRoom removes by slug', () => {
+    addJoinedRoom({ slug: 'my-room', name: 'My Room', room_type: 'open', joinedAt: '2026-01-01T00:00:00.000Z' })
+    addJoinedRoom({ slug: 'other-room', name: 'Other', room_type: 'secured', joinedAt: '2026-01-01T00:00:00.000Z' })
+    removeJoinedRoom('my-room')
+    const rooms = getJoinedRooms()
+    expect(rooms).toHaveLength(1)
+    expect(rooms[0].slug).toBe('other-room')
+  })
+
+  it('hasJoinedRoom returns true for stored slug', () => {
+    addJoinedRoom({ slug: 'my-room', name: 'My Room', room_type: 'open', joinedAt: '2026-01-01T00:00:00.000Z' })
+    expect(hasJoinedRoom('my-room')).toBe(true)
+  })
+
+  it('hasJoinedRoom returns false for unknown slug', () => {
+    expect(hasJoinedRoom('unknown')).toBe(false)
+  })
+
+  it('getJoinedRooms clears and returns [] when old Record format is found', () => {
+    // Simulate old format: { "some-uuid": true }
+    localStorage.setItem('chatboxai_joined_rooms', JSON.stringify({ 'some-uuid': true }))
+    expect(getJoinedRooms()).toEqual([])
+    // Key should be cleared
+    expect(localStorage.getItem('chatboxai_joined_rooms')).toBeNull()
+  })
+
+  it('getJoinedRooms returns [] on malformed JSON', () => {
+    localStorage.setItem('chatboxai_joined_rooms', 'not-json')
+    expect(getJoinedRooms()).toEqual([])
   })
 })

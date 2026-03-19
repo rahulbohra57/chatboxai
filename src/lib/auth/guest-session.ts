@@ -3,6 +3,7 @@
 
 const GUEST_ID_KEY = 'chatboxai_guest_id'
 const DISPLAY_NAME_KEY = 'chatboxai_display_name'
+const JOINED_ROOMS_KEY = 'chatboxai_joined_rooms'
 
 /**
  * Returns the stored guest ID, or creates and stores a new one.
@@ -53,4 +54,51 @@ export function getGuestIdentity(): { guestId: string; displayName: string | nul
     guestId: getOrCreateGuestId(),
     displayName: getDisplayName(),
   }
+}
+
+export type JoinedRoom = {
+  slug: string
+  name: string
+  room_type: 'open' | 'secured'
+  joinedAt: string // ISO timestamp
+}
+
+export function getJoinedRooms(): JoinedRoom[] {
+  if (typeof window === 'undefined') return []
+  const raw = localStorage.getItem(JOINED_ROOMS_KEY)
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) {
+      localStorage.removeItem(JOINED_ROOMS_KEY)
+      return []
+    }
+    return parsed as JoinedRoom[]
+  } catch {
+    localStorage.removeItem(JOINED_ROOMS_KEY)
+    return []
+  }
+}
+
+export function addJoinedRoom(room: JoinedRoom): void {
+  if (typeof window === 'undefined') return
+  const rooms = getJoinedRooms()
+  const existing = rooms.findIndex((r) => r.slug === room.slug)
+  if (existing >= 0) {
+    rooms[existing] = room
+  } else {
+    rooms.push(room)
+  }
+  localStorage.setItem(JOINED_ROOMS_KEY, JSON.stringify(rooms))
+}
+
+export function removeJoinedRoom(slug: string): void {
+  if (typeof window === 'undefined') return
+  const rooms = getJoinedRooms().filter((r) => r.slug !== slug)
+  localStorage.setItem(JOINED_ROOMS_KEY, JSON.stringify(rooms))
+}
+
+export function hasJoinedRoom(slug: string): boolean {
+  if (typeof window === 'undefined') return false
+  return getJoinedRooms().some((r) => r.slug === slug)
 }
