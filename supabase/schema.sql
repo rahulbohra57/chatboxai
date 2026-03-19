@@ -16,11 +16,17 @@ create table if not exists rooms (
   created_at          timestamptz not null default now(),
   updated_at          timestamptz not null default now(),
   created_by_guest_id text,
-  is_active           boolean not null default true
+  is_active           boolean not null default true,
+  closed_by_name      text
 );
 
 create unique index if not exists rooms_slug_idx on rooms(slug);
 create index if not exists rooms_is_active_idx on rooms(is_active);
+
+-- NOTE: The following REPLICA IDENTITY statement must be run manually on the live DB
+-- in the Supabase SQL Editor. It is required for Realtime to include all columns
+-- (including closed_by_name) in the UPDATE payload.
+-- alter table rooms replica identity full;
 
 -- ============================================================
 -- MESSAGES
@@ -77,3 +83,16 @@ $$ language plpgsql;
 create trigger rooms_updated_at
   before update on rooms
   for each row execute function update_updated_at_column();
+
+-- ============================================================
+-- GRANTS (required when creating tables via raw SQL editor)
+-- Supabase roles need explicit grants on manually-created tables
+-- ============================================================
+grant usage on schema public to anon, authenticated, service_role;
+
+grant all on table rooms        to anon, authenticated, service_role;
+grant all on table messages     to anon, authenticated, service_role;
+grant all on table participants to anon, authenticated, service_role;
+grant all on table rate_limits  to anon, authenticated, service_role;
+
+grant all on all sequences in schema public to anon, authenticated, service_role;

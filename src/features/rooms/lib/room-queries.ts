@@ -12,7 +12,7 @@ export async function getRoomBySlug(
 ): Promise<RoomPublic | null> {
   const { data, error } = await supabase
     .from('rooms')
-    .select('id, slug, name, room_type, created_at, updated_at, created_by_guest_id, is_active')
+    .select('id, slug, name, room_type, created_at, updated_at, created_by_guest_id, is_active, closed_by_name')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle()
@@ -34,7 +34,7 @@ export async function getRoomForValidation(
 ): Promise<Database['public']['Tables']['rooms']['Row'] | null> {
   const { data, error } = await supabase
     .from('rooms')
-    .select('id, slug, name, room_type, secret_code_hash, created_at, updated_at, created_by_guest_id, is_active')
+    .select('id, slug, name, room_type, secret_code_hash, created_at, updated_at, created_by_guest_id, is_active, closed_by_name')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle()

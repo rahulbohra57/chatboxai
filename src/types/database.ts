@@ -20,6 +20,7 @@ export interface Database {
           updated_at: string
           created_by_guest_id: string | null
           is_active: boolean
+          closed_by_name: string | null
         }
         Insert: {
           id?: string
@@ -31,6 +32,7 @@ export interface Database {
           updated_at?: string
           created_by_guest_id?: string | null
           is_active?: boolean
+          closed_by_name?: string | null
         }
         Update: Partial<Database['public']['Tables']['rooms']['Insert']>
         Relationships: []
