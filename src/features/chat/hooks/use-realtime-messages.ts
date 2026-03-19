@@ -16,6 +16,7 @@ export function useRealtimeMessages(
   addMessage: (msg: Message) => void
   addOptimistic: (tempId: string, msg: Message) => void
   confirmOptimistic: (tempId: string, realMessage: Message) => void
+  broadcastRoomClosed: (closedBy: string) => Promise<void>
 } {
   const router = useRouter()
   const [messages, setMessages] = useState<Message[]>(initialMessages)
@@ -23,6 +24,7 @@ export function useRealtimeMessages(
   const lastSeenAt = useRef<string>(
     initialMessages.at(-1)?.created_at ?? new Date(0).toISOString()
   )
+  const channelRef = useRef<ReturnType<ReturnType<typeof getSupabaseBrowserClient>['channel']> | null>(null)
 
   // Add a message that already has a real ID (e.g. AI response)
   const addMessage = useCallback((msg: Message) => {
@@ -57,12 +59,33 @@ export function useRealtimeMessages(
     seenIds.current.delete(tempId)
   }, [])
 
+  // Sends a broadcast on the existing channel so all members get redirected.
+  // Called by chat-room.tsx after close-room action succeeds.
+  const broadcastRoomClosed = useCallback(async (closedBy: string) => {
+    await channelRef.current?.send({
+      type: 'broadcast',
+      event: 'room-closed',
+      payload: { closedBy },
+    })
+  }, [])
+
   // Realtime subscription
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
 
     const channel = supabase
       .channel(`room:${roomId}`)
+      .on(
+        'broadcast',
+        { event: 'room-closed' },
+        (payload) => {
+          if (!isClosingRef.current) {
+            const name = (payload.payload as { closedBy?: string })?.closedBy ?? 'someone'
+            toast.error(`This room was closed by ${name}`, { duration: 4000 })
+            setTimeout(() => router.push('/'), 2000)
+          }
+        }
+      )
       .on(
         'postgres_changes',
         {
@@ -92,24 +115,22 @@ export function useRealtimeMessages(
         },
         (payload) => {
           const updated = payload.new as Pick<RoomPublic, 'is_active' | 'closed_by_name'>
-          if (updated.is_active === false) {
-            if (!isClosingRef.current) {
-              // Another user closed the room
-              toast.error(
-                `This room was closed by ${updated.closed_by_name ?? 'someone'}`,
-                { duration: 4000 }
-              )
-              setTimeout(() => router.push('/'), 2000)
-            }
-            // If isClosingRef.current === true, the closer already navigates
-            // immediately after the server action returns (in chat-room.tsx).
+          if (updated.is_active === false && !isClosingRef.current) {
+            toast.error(
+              `This room was closed by ${updated.closed_by_name ?? 'someone'}`,
+              { duration: 4000 }
+            )
+            setTimeout(() => router.push('/'), 2000)
           }
         }
       )
       .subscribe()
 
+    channelRef.current = channel
+
     return () => {
       supabase.removeChannel(channel)
+      channelRef.current = null
     }
   }, [roomId, isClosingRef, router])
 
@@ -144,5 +165,5 @@ export function useRealtimeMessages(
     return () => clearInterval(interval)
   }, [roomId])
 
-  return { messages, addMessage, addOptimistic, confirmOptimistic }
+  return { messages, addMessage, addOptimistic, confirmOptimistic, broadcastRoomClosed }
 }

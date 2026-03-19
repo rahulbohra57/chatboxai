@@ -8,9 +8,10 @@ import type { Message } from '../types/message.types'
 interface MessageListProps {
   messages: Message[]
   currentGuestId: string
+  aiGuestId?: string
 }
 
-export function MessageList({ messages, currentGuestId }: MessageListProps) {
+export function MessageList({ messages, currentGuestId, aiGuestId }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [userScrolled, setUserScrolled] = useState(false)
@@ -46,6 +47,7 @@ export function MessageList({ messages, currentGuestId }: MessageListProps) {
           key={message.id}
           message={message}
           isOwnMessage={message.sender_guest_id === currentGuestId}
+          isAIMessage={!!aiGuestId && message.sender_guest_id === aiGuestId}
         />
       ))}
       <div ref={bottomRef} />

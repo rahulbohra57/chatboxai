@@ -29,7 +29,7 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
   const [hasJoinedThisRoom, setHasJoinedThisRoom] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
 
-  const { messages, addMessage, addOptimistic, confirmOptimistic } =
+  const { messages, addMessage, addOptimistic, confirmOptimistic, broadcastRoomClosed } =
     useRealtimeMessages(room.id, initialMessages, isClosingRef)
 
   // Hydrate guest identity from localStorage (client-side only)
@@ -64,7 +64,8 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
       return
     }
 
-    // Navigate immediately on success — don't wait for realtime echo
+    // Broadcast to all room members before navigating
+    await broadcastRoomClosed(name)
     router.push('/')
   }
 
@@ -113,6 +114,7 @@ export function ChatRoom({ room, initialMessages }: ChatRoomProps) {
         roomId={room.id}
         guestId={guestId}
         senderName={displayName}
+        participants={[...new Set(messages.map((m) => m.sender_name).filter((n) => n !== displayName))]}
         onOptimisticSend={handleOptimisticSend}
         onMessageConfirmed={handleMessageConfirmed}
       />
